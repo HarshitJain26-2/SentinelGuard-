@@ -1,9 +1,10 @@
 # SentinelGuard — System Architecture
 
-> **STATUS: PLANNED**
-> This document describes the *intended* architecture of SentinelGuard.
-> **No application code has been implemented yet.**
-> All components described below are planned and subject to revision as development proceeds.
+> **STATUS: PARTIALLY IMPLEMENTED (Phase 1 Complete)**
+> This document describes the architecture of SentinelGuard.
+> **Implemented components:** Browser extension scaffold (`extension/`, `manifest.json`, content script, service worker, popup UI).
+> **Planned components:** Behavioral signal capture, Django backend, ML model, adaptive security & OTP, admin dashboard.
+> All components not explicitly marked IMPLEMENTED remain PLANNED.
 
 ---
 
@@ -17,7 +18,8 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 
 | Component | Member | Status |
 |-----------|--------|--------|
-| Browser Extension + Signal Capture | **Member 1** | PLANNED |
+| Browser Extension (Scaffold) | **Member 1** | **IMPLEMENTED** |
+| Behavioral Signal Capture | **Member 1** | PLANNED |
 | Django Backend + ML Risk Model | **Member 2** | PLANNED |
 | Adaptive Security Logic + OTP | **Member 3** | PLANNED |
 | Admin Dashboard + Demo Login Page | **Member 4** | PLANNED |
@@ -104,28 +106,31 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 
 ## Component Detail
 
-### Member 1 — Browser Extension (PLANNED)
+### Member 1 — Browser Extension [IMPLEMENTED: Scaffold; PLANNED: Signal Capture]
 
-**Repository path:** `extension/`
+**Repository path:** `extension/` (**IMPLEMENTED**)
 
 **Purpose:** Capture behavioral signals from the user's interaction with a login form and transmit them securely to the backend for risk analysis.
 
-**Planned sub-components:**
+**Scaffold and Sub-components:**
 
-| Sub-component | File (planned) | Responsibility |
-|---------------|---------------|----------------|
-| Content Script | `extension/content/content_script.js` | Injected into the login page; attaches event listeners for mouse, keyboard, and form events |
-| Background Service Worker | `extension/background/service_worker.js` | Receives events from content script; buffers, batches, and POSTs to backend API |
-| Popup UI | `extension/popup/popup.html` + `.js` | ON/OFF toggle; status indicator |
-| Manifest | `extension/manifest.json` | Chrome Manifest V3 descriptor |
+| Sub-component | File / Path | Status | Responsibility |
+|---------------|-------------|--------|----------------|
+| Extension Root | `extension/` | **IMPLEMENTED** | Base directory for Chrome extension |
+| Manifest | `extension/manifest.json` | **IMPLEMENTED** | Chrome Manifest V3 descriptor |
+| Content Script | `extension/content/content.js` | **IMPLEMENTED (Scaffold)** | Injected into target pages; currently logs load status |
+| Background Service Worker | `extension/background/service-worker.js` | **IMPLEMENTED (Scaffold)** | Background service worker; initializes lifecycle |
+| Popup UI | `extension/popup/popup.html`, `popup.css`, `popup.js` | **IMPLEMENTED (Scaffold)** | Displays ON/OFF toggle UI and status badge |
+| Event Buffer | `extension/utils/signal_buffer.js` (planned) | PLANNED | Buffers and batches captured events |
+| Signal Capture | Content script listeners | PLANNED | Behavioral signals capture (mouse, keystroke timing, form events) |
 
 **Signals captured (PLANNED — subject to privacy constraints in [`PRIVACY.md`](./PRIVACY.md)):**
 
-- Mouse movement coordinates and timing
-- Typing inter-keystroke timing (NOT key values or characters)
-- Click events and timing
-- Form field focus/blur events
-- Login form submission event
+- Mouse movement coordinates and timing (PLANNED)
+- Typing inter-keystroke timing (NOT key values or characters) (PLANNED)
+- Click events and timing (PLANNED)
+- Form field focus/blur events (PLANNED)
+- Login form submission event (PLANNED)
 
 **Signals never captured:**
 
@@ -133,7 +138,7 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 - Any text typed into input fields
 - Clipboard contents
 
-**API boundary:** Member 1 sends a single HTTP POST per session to an endpoint provided by Member 2. The payload schema is defined in [`DATA_SCHEMA.md`](./DATA_SCHEMA.md) (PROVISIONAL).
+**API boundary:** Member 1 sends a single HTTP POST per session to an endpoint provided by Member 2. The payload schema is defined in [`DATA_SCHEMA.md`](./DATA_SCHEMA.md) (PROVISIONAL). Behavioral signal transmission is **PLANNED** for a later phase.
 
 ---
 
@@ -204,17 +209,16 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 
 ---
 
-## Technology Stack (PLANNED)
-
-| Layer | Technology | Member |
-|-------|-----------|--------|
-| Browser Extension | Chrome Manifest V3, Vanilla JS | Member 1 |
-| Backend API | Python, Django, Django REST Framework | Member 2 |
-| ML Model | scikit-learn / PyTorch (TBD) | Member 2 |
-| Security Logic | Django middleware / signals | Member 3 |
-| OTP | TOTP library / email backend (TBD) | Member 3 |
-| Admin Dashboard | React or Vanilla JS + Chart.js (TBD) | Member 4 |
-| Database | PostgreSQL or SQLite (dev) | Member 2 |
+## Technology Stack
+| Layer | Technology | Member | Status |
+|-------|-----------|--------|--------|
+| Browser Extension | Chrome Manifest V3, Vanilla JS | Member 1 | **IMPLEMENTED (Scaffold)** |
+| Backend API | Python, Django, Django REST Framework | Member 2 | PLANNED |
+| ML Model | scikit-learn / PyTorch (TBD) | Member 2 | PLANNED |
+| Security Logic | Django middleware / signals | Member 3 | PLANNED |
+| OTP | TOTP library / email backend (TBD) | Member 3 | PLANNED |
+| Admin Dashboard | React or Vanilla JS + Chart.js (TBD) | Member 4 | PLANNED |
+| Database | PostgreSQL or SQLite (dev) | Member 2 | PLANNED |
 
 ---
 
@@ -232,5 +236,5 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 
 ---
 
-*Last updated: Phase 0 — Documentation Foundation*
-*All content in this file is PLANNED unless explicitly marked IMPLEMENTED.*
+*Last updated: Phase 1 — Browser Extension Scaffold*
+*All components not explicitly marked IMPLEMENTED remain PLANNED.*

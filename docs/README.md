@@ -23,11 +23,12 @@ All documentation in this project follows three strict labels to distinguish wha
 ```
 docs/
 ├── README.md              ← This file. Documentation index and navigation guide.
-├── ARCHITECTURE.md        ← Planned system architecture. All four members' components.
+├── ARCHITECTURE.md        ← System architecture (Scaffold IMPLEMENTED; Capture PLANNED).
 ├── DATA_SCHEMA.md         ← Provisional behavioral event schema. Requires Member 2 sign-off.
 ├── PRIVACY.md             ← Privacy-by-design principles. Binding commitment for Member 1.
 └── reports/
-    └── PHASE-00-INSPECTION.md  ← Permanent Phase 0 inspection report.
+    ├── PHASE-00-INSPECTION.md             ← Permanent Phase 0 inspection report.
+    └── PHASE-01-EXTENSION-SCAFFOLDING.md  ← Permanent Phase 1 extension scaffolding report.
 ```
 
 ---
@@ -35,9 +36,9 @@ docs/
 ## Document Summaries
 
 ### [`ARCHITECTURE.md`](./ARCHITECTURE.md)
-Describes the overall planned system architecture for SentinelGuard. Covers all four members' components, their boundaries, and how data flows between them. This is the single authoritative reference for understanding how the system fits together.
+Describes the system architecture for SentinelGuard. Covers all four members' components, their boundaries, and how data flows between them.
 
-**Status: PLANNED** — No application code exists yet.
+**Status: PARTIALLY IMPLEMENTED** — Extension scaffold (`extension/`) is IMPLEMENTED; behavioral signal capture, backend, ML, security, and dashboard are PLANNED.
 
 ---
 
@@ -56,9 +57,16 @@ Documents the privacy-by-design principles that govern what the browser extensio
 ---
 
 ### [`reports/PHASE-00-INSPECTION.md`](./reports/PHASE-00-INSPECTION.md)
-The permanent phase report for Phase 0. Records the repository state at the beginning of the project, inspection findings, ownership boundaries, identified risks, and coordination requirements. Each development phase will produce a corresponding report in this folder.
+The permanent phase report for Phase 0. Records the repository state at project inception, inspection findings, ownership boundaries, and coordination requirements.
 
 **Status: COMPLETE** — Phase 0 inspection is done.
+
+---
+
+### [`reports/PHASE-01-EXTENSION-SCAFFOLDING.md`](./reports/PHASE-01-EXTENSION-SCAFFOLDING.md)
+The permanent phase report for Phase 1. Records the implementation, architecture, and verification of the Chrome Manifest V3 extension scaffold.
+
+**Status: COMPLETE** — Phase 1 extension scaffold is done.
 
 ---
 
@@ -69,7 +77,7 @@ Each development phase produces a permanent report stored in `docs/reports/`:
 | Report | Phase | Status |
 |--------|-------|--------|
 | [`PHASE-00-INSPECTION.md`](./reports/PHASE-00-INSPECTION.md) | Phase 0 — Repository Inspection | ✅ Complete |
-| `PHASE-01-EXTENSION.md` | Phase 1 — Browser Extension Scaffold | ⏳ Pending |
+| [`PHASE-01-EXTENSION-SCAFFOLDING.md`](./reports/PHASE-01-EXTENSION-SCAFFOLDING.md) | Phase 1 — Browser Extension Scaffold | ✅ Complete |
 | `PHASE-02-BACKEND.md` | Phase 2 — Django Backend + ML Model | ⏳ Pending |
 | `PHASE-03-SECURITY.md` | Phase 3 — Adaptive Security + OTP | ⏳ Pending |
 | `PHASE-04-DASHBOARD.md` | Phase 4 — Admin Dashboard | ⏳ Pending |

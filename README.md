@@ -37,37 +37,57 @@ SentinelGuard is a four-component system that:
 
 ```
 PHASE 0 — COMPLETE   ✅  Repository inspection & documentation foundation
-PHASE 1 — PENDING    ⏳  Browser extension scaffold (Member 1)
+PHASE 1 — COMPLETE   ✅  Browser extension scaffold (Member 1)
 PHASE 2 — PENDING    ⏳  Django backend + ML model (Member 2)
 PHASE 3 — PENDING    ⏳  Adaptive security + OTP (Member 3)
 PHASE 4 — PENDING    ⏳  Admin dashboard + demo page (Member 4)
 PHASE 5 — PENDING    ⏳  Integration & end-to-end testing (all members)
 ```
 
-> **Note:** No application code exists yet. All components listed above are **PLANNED**. Implementation is currently beginning.
+> **Current Implementation Note:** The Chrome Manifest V3 browser extension scaffold (`extension/`) is **IMPLEMENTED**. It initializes the service worker, content script, and popup UI. **Behavioral signal capture (mouse, keystrokes, form telemetry) is NOT implemented yet** and remains PLANNED. All backend, ML, security, and dashboard components are PLANNED.
 
 ---
 
-## Planned Repository Structure
+## Implemented Extension Scaffold (Phase 1)
+
+Member 1 has delivered the foundational Manifest V3 browser extension under `extension/`:
+
+- **Manifest V3 (`extension/manifest.json`)**: Configured with minimal permissions and scoped strictly to local development hosts (`http://localhost/*`, `http://127.0.0.1/*`).
+- **Background Service Worker (`extension/background/service-worker.js`)**: Manages extension lifecycle and registers installation listeners without network calls.
+- **Content Script (`extension/content/content.js`)**: Verified injection point into target login pages; purely logs execution in DevTools.
+- **Popup UI (`extension/popup/`)**: Self-contained UI with SentinelGuard branding, an Active status badge, and an interactive ON/OFF toggle switch.
+- **Privacy & Safety Invariant**: In this phase, zero keystrokes, mouse positions, form inputs, passwords, or credentials are captured or transmitted.
+
+---
+
+## Repository Structure
 
 ```
 SentinelGuard-/
-├── extension/           ← Member 1: Chrome browser extension
-├── backend/             ← Member 2: Django REST API + ML model
-├── security/            ← Member 3: Adaptive security + OTP
-├── dashboard/           ← Member 4: Admin dashboard + demo page
-├── docs/                ← Project-wide documentation (all members)
+├── extension/           ← [IMPLEMENTED - Scaffold] Member 1: Chrome browser extension
+│   ├── manifest.json
+│   ├── background/
+│   │   └── service-worker.js
+│   ├── content/
+│   │   └── content.js
+│   └── popup/
+│       ├── popup.html
+│       ├── popup.css
+│       └── popup.js
+├── backend/             ← [PLANNED] Member 2: Django REST API + ML model
+├── security/            ← [PLANNED] Member 3: Adaptive security + OTP
+├── dashboard/           ← [PLANNED] Member 4: Admin dashboard + demo page
+├── docs/                ← [IMPLEMENTED] Project-wide documentation (all members)
 │   ├── README.md
 │   ├── ARCHITECTURE.md
 │   ├── DATA_SCHEMA.md
 │   ├── PRIVACY.md
 │   └── reports/
-│       └── PHASE-00-INSPECTION.md
+│       ├── PHASE-00-INSPECTION.md
+│       └── PHASE-01-EXTENSION-SCAFFOLDING.md
 ├── .gitignore
 └── README.md            ← This file
 ```
-
-> **PLANNED** — Only `docs/` and root `README.md` exist at this time.
 
 ---
 
@@ -107,10 +127,11 @@ All project documentation lives in [`docs/`](./docs/README.md).
 | Document | Purpose |
 |----------|---------|
 | [`docs/README.md`](./docs/README.md) | Documentation index and navigation guide |
-| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Planned system architecture |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | System architecture (Scaffold IMPLEMENTED; Capture PLANNED) |
 | [`docs/DATA_SCHEMA.md`](./docs/DATA_SCHEMA.md) | Behavioral event schema (provisional) |
 | [`docs/PRIVACY.md`](./docs/PRIVACY.md) | Privacy-by-design principles |
 | [`docs/reports/PHASE-00-INSPECTION.md`](./docs/reports/PHASE-00-INSPECTION.md) | Phase 0 inspection report |
+| [`docs/reports/PHASE-01-EXTENSION-SCAFFOLDING.md`](./docs/reports/PHASE-01-EXTENSION-SCAFFOLDING.md) | Phase 1 extension scaffolding report |
 
 ---
 

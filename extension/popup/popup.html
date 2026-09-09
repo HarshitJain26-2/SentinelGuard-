@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SentinelGuard</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="card">
+    <header class="header">
+      <div class="brand">
+        <span class="shield-icon" aria-hidden="true">🛡️</span>
+        <div class="brand-text">
+          <h1 class="title">SentinelGuard</h1>
+          <p class="subtitle">Bot &amp; Credential Defense</p>
+        </div>
+      </div>
+      <span id="status-badge" class="badge badge-active">ACTIVE</span>
+    </header>
+
+    <main class="content">
+      <div class="status-panel">
+        <div class="status-info">
+          <span class="status-label">Protection Status</span>
+          <span id="status-value" class="status-value">ON</span>
+        </div>
+        <label class="switch" for="protection-toggle">
+          <input type="checkbox" id="protection-toggle" checked aria-label="Toggle Protection">
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="version-info">
+        <span>Scaffold v0.1.0 (Phase 1)</span>
+        <span class="mode-tag">Demo Mode</span>
+      </div>
+    </main>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

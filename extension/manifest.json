@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "SentinelGuard",
+  "version": "0.1.0",
+  "description": "AI-Driven Bot & Credential-Stuffing Defense System - Browser Extension",
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "SentinelGuard Status"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "content/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
