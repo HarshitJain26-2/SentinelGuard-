@@ -38,13 +38,13 @@ SentinelGuard is a four-component system that:
 ```
 PHASE 0 — COMPLETE   ✅  Repository inspection & documentation foundation
 PHASE 1 — COMPLETE   ✅  Browser extension scaffold (Member 1)
-PHASE 2 — PENDING    ⏳  Django backend + ML model (Member 2)
-PHASE 3 — PENDING    ⏳  Adaptive security + OTP (Member 3)
-PHASE 4 — PENDING    ⏳  Admin dashboard + demo page (Member 4)
+PHASE 2 — COMPLETE   ✅  Extension runtime messaging pipeline (Member 1)
+PHASE 3 — PENDING    ⏳  Behavioral signal capture & Django backend (Members 1 & 2)
+PHASE 4 — PENDING    ⏳  Adaptive security + OTP & admin dashboard (Members 3 & 4)
 PHASE 5 — PENDING    ⏳  Integration & end-to-end testing (all members)
 ```
 
-> **Current Implementation Note:** The Chrome Manifest V3 browser extension scaffold (`extension/`) is **IMPLEMENTED**. It initializes the service worker, content script, and popup UI. **Behavioral signal capture (mouse, keystrokes, form telemetry) is NOT implemented yet** and remains PLANNED. All backend, ML, security, and dashboard components are PLANNED.
+> **Current Implementation Note:** The Chrome Manifest V3 browser extension scaffold and internal runtime messaging pipeline (`extension/`) are **IMPLEMENTED** and manually verified. The extension initializes the service worker, content script, popup UI, and transmits safe runtime IPC messages. **Behavioral signal capture (mouse, keystrokes, form telemetry) is NOT implemented yet** and remains PLANNED. All backend, ML, security, and dashboard components are PLANNED.
 
 ---
 
@@ -64,6 +64,21 @@ Member 1 has delivered and manually verified the foundational Manifest V3 browse
   - Content script injection on `http://localhost:3000/` (`[SentinelGuard] Content script loaded.`): **PASS**
   - Network isolation (0 outbound telemetry/API calls): **PASS**
 - **Privacy & Safety Invariant**: In this phase, zero keystrokes, mouse positions, form inputs, passwords, or credentials are captured or transmitted. All behavioral capture, batching, and backend communication remain PLANNED.
+
+---
+
+## Implemented Runtime Messaging Pipeline (Phase 2)
+
+Member 1 has delivered and manually verified one-way internal runtime messaging from `content.js` to `service-worker.js`:
+
+- **One-Way IPC Channel**: `chrome.runtime.sendMessage()` dispatches a minimal, safe `{ type: "TEST_EVENT", timestamp: Date.now() }` payload upon content script load.
+- **Service Worker Validation**: `chrome.runtime.onMessage` listener strictly validates `TEST_EVENT`, logs receipt, and logs the preserved timestamp without permanent storage or network egress.
+- **Manual Verification Summary (Google Chrome)**:
+  - Webpage Console (`http://localhost:3000/`): Logs `[SentinelGuard] Content script loaded.` and `[SentinelGuard] Test event sent.`: **PASS**
+  - Service Worker Console: Logs `[SentinelGuard] Service worker initialized.`, `[SentinelGuard] Test event received.`, and timestamp `1789020905477`: **PASS**
+  - Payload integrity: Timestamp transferred intact without serialization errors: **PASS**
+  - Network isolation: Zero outbound network/telemetry requests: **PASS**
+- **Safety Invariant**: No mouse tracking, keystroke dynamics, login interaction detection, event buffering, or backend API integration implemented. All behavioral signal capture remains strictly PLANNED.
 
 ---
 
@@ -141,6 +156,7 @@ All project documentation lives in [`docs/`](./docs/README.md).
 | [`docs/PRIVACY.md`](./docs/PRIVACY.md) | Privacy-by-design principles |
 | [`docs/reports/PHASE-00-INSPECTION.md`](./docs/reports/PHASE-00-INSPECTION.md) | Phase 0 inspection report |
 | [`docs/reports/PHASE-01-EXTENSION-SCAFFOLDING.md`](./docs/reports/PHASE-01-EXTENSION-SCAFFOLDING.md) | Phase 1 extension scaffolding report |
+| [`docs/reports/PHASE-02-MESSAGING.md`](./docs/reports/PHASE-02-MESSAGING.md) | Phase 2 runtime messaging verification report |
 
 ---
 
