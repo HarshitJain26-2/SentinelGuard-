@@ -50,13 +50,20 @@ PHASE 5 — PENDING    ⏳  Integration & end-to-end testing (all members)
 
 ## Implemented Extension Scaffold (Phase 1)
 
-Member 1 has delivered the foundational Manifest V3 browser extension under `extension/`:
+Member 1 has delivered and manually verified the foundational Manifest V3 browser extension under `extension/` and test harness under `test-page/`:
 
 - **Manifest V3 (`extension/manifest.json`)**: Configured with minimal permissions and scoped strictly to local development hosts (`http://localhost/*`, `http://127.0.0.1/*`).
 - **Background Service Worker (`extension/background/service-worker.js`)**: Manages extension lifecycle and registers installation listeners without network calls.
 - **Content Script (`extension/content/content.js`)**: Verified injection point into target login pages; purely logs execution in DevTools.
 - **Popup UI (`extension/popup/`)**: Self-contained UI with SentinelGuard branding, an Active status badge, and an interactive ON/OFF toggle switch.
-- **Privacy & Safety Invariant**: In this phase, zero keystrokes, mouse positions, form inputs, passwords, or credentials are captured or transmitted.
+- **Local Test Environment (`test-page/`)**: Minimal static HTML page used to verify content script injection on `http://localhost:3000/`.
+- **Manual Verification Summary (Google Chrome)**:
+  - Extension loads in unpacked Developer Mode: **PASS**
+  - Popup opens & toggle functions interactively: **PASS**
+  - Service worker initializes (`[SentinelGuard] Service worker initialized.`): **PASS**
+  - Content script injection on `http://localhost:3000/` (`[SentinelGuard] Content script loaded.`): **PASS**
+  - Network isolation (0 outbound telemetry/API calls): **PASS**
+- **Privacy & Safety Invariant**: In this phase, zero keystrokes, mouse positions, form inputs, passwords, or credentials are captured or transmitted. All behavioral capture, batching, and backend communication remain PLANNED.
 
 ---
 
