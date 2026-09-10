@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SentinelGuard Extension Test Page</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-heading: #f0f6fc;
+      --accent: #58a6ff;
+      --badge-bg: #1f2937;
+      --badge-border: #374151;
+      --badge-text: #9ca3af;
+      --code-bg: #0d1117;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 640px;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 32px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
+      color: var(--badge-text);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: var(--text-heading);
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .notice-box {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      margin-top: 20px;
+      background: rgba(13, 17, 23, 0.5);
+    }
+
+    .notice-title {
+      font-weight: 600;
+      color: var(--text-heading);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    ul {
+      list-style-position: inside;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--badge-text);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <span class="badge">Development Only</span>
+    <h1>SentinelGuard Extension Test Page</h1>
+    <h2>Phase 1 — Content Script Verification</h2>
+
+    <p>
+      This is a minimal, completely static development-only test page used solely to verify
+      Chrome extension content script injection (<code>extension/content/content.js</code>) on <code>http://localhost:3000/</code>.
+    </p>
+
+    <div class="notice-box">
+      <div class="notice-title">Verification Boundary & Invariants:</div>
+      <ul>
+        <li>Static HTML/CSS only — contains no JavaScript.</li>
+        <li>No login, authentication, or password inputs.</li>
+        <li>No OTP challenges or step-up verification.</li>
+        <li>No behavioral signal capture (zero mouse, keyboard, or form listeners).</li>
+        <li>No backend network communication or ML risk evaluation.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

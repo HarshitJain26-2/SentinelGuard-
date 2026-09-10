@@ -4,7 +4,7 @@
 **Phase:** 1 — Extension Scaffold  
 **Lead Component:** Member 1 (Browser Extension & Signal Capture)  
 **Date:** 2026-09-09  
-**Status:** COMPLETE  
+**Status:** PENDING MANUAL VERIFICATION  
 
 ---
 
@@ -70,16 +70,18 @@ SentinelGuard-/
 │   └── reports/
 │       ├── PHASE-00-INSPECTION.md
 │       └── PHASE-01-EXTENSION-SCAFFOLDING.md
-└── extension/
-    ├── manifest.json
-    ├── background/
-    │   └── service-worker.js
-    ├── content/
-    │   └── content.js
-    └── popup/
-        ├── popup.html
-        ├── popup.css
-        └── popup.js
+├── extension/
+│   ├── manifest.json
+│   ├── background/
+│   │   └── service-worker.js
+│   ├── content/
+│   │   └── content.js
+│   └── popup/
+│       ├── popup.html
+│       ├── popup.css
+│       └── popup.js
+└── test-page/
+    └── index.html
 ```
 
 ---
@@ -390,7 +392,78 @@ Since Chrome browser runtime execution requires a graphical desktop session, fol
 
 ---
 
-## 16. Test Results
+## 16. Manual Verification Environment
+
+During manual testing of the unpacked Chrome extension, the background service worker, popup UI, and popup toggle were successfully verified. However, when navigating to `http://localhost:3000/` to verify content script injection, the target endpoint was initially unavailable.
+
+### 16.1. Why localhost:3000 Was Initially Unavailable
+In Phase 1, only the browser extension scaffold was built. Neither Member 2's Django backend API nor Member 4's demo login application had been initialized or started. Consequently, there was no active web server or process listening on port 3000.
+
+### 16.2. Evidence from Get-NetTCPConnection
+PowerShell diagnostic execution confirmed that port 3000 was inactive:
+```powershell
+Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
+```
+- **Result:** Exit code `1`, no output returned.
+- **Interpretation:** No process on the host OS held an active TCP socket bound to local port 3000.
+
+### 16.3. Why Chrome Displayed `chrome-error://chromewebdata/`
+When Google Chrome attempts to connect to `http://localhost:3000/` while no socket is listening, the operating system kernel immediately rejects the TCP SYN packet with `ECONNREFUSED` / `ERR_CONNECTION_REFUSED`. Rather than displaying an HTTP response, Chrome intercepts connection failures and navigates the tab to its internal error page:
+`chrome-error://chromewebdata/` ("This site can't be reached").
+
+### 16.4. Why Content Scripts Cannot Run on Browser Error Pages
+Under Chrome's Manifest V3 security model, content scripts are sandboxed and restricted:
+1. `manifest.json` specifies target match patterns: `http://localhost/*` and `http://127.0.0.1/*`.
+2. Chrome strictly restricts script injection into privileged internal schemes (`chrome://`, `chrome-extension://`, and `chrome-error://`).
+3. Because the active document URL resolves to `chrome-error://chromewebdata/`, Chrome's internal security policy blocks content scripts from executing. As a result, `extension/content/content.js` could not be injected or run on the error page.
+
+### 16.5. Purpose of `test-page/`
+To verify content script injection without waiting for Member 2's backend or Member 4's demo application, a dedicated `test-page/` directory was created:
+- Contains a completely static `test-page/index.html`.
+- Serves strictly as a neutral HTTP target on `http://localhost:3000/` matching `http://localhost/*`.
+- Clearly identifies itself as a development/test page.
+- **Strict safety boundaries:** Contains NO JavaScript, NO login or authentication mechanisms, NO password inputs, NO OTP flows, NO mouse or keyboard event listeners, NO backend communication, and NO machine learning dependencies.
+
+### 16.6. Exact Command to Serve `test-page/`
+To serve `test-page/` without introducing npm packages or heavy application frameworks, use Python's built-in HTTP server:
+```powershell
+python -m http.server 3000 --directory test-page
+```
+
+- **Runtime:** Python 3.13 standard library (`http.server`).
+- **Dependencies added:** Zero (`0`).
+- **Expected URL:** `http://localhost:3000/`
+
+### 16.7. Exact Manual Verification Steps
+Follow these steps to complete manual verification of the content script:
+
+1. **Start the local server:**
+   In a dedicated terminal (from the project root `c:\Users\Harshit\Desktop\Projects\ERI\SentinelGuard-`):
+   ```powershell
+   python -m http.server 3000 --directory test-page
+   ```
+   Verify the terminal displays: `Serving HTTP on :: port 3000 (http://[::]:3000/) ...`
+2. **Open Google Chrome:**
+   Ensure the SentinelGuard extension is loaded in Developer Mode (`chrome://extensions/`) pointing to `SentinelGuard-/extension`.
+3. **Navigate to the Test Page:**
+   Go to `http://localhost:3000/`.
+   Verify the page loads showing:
+   `SentinelGuard Extension Test Page`
+   `Phase 1 — Content Script Verification`
+4. **Open Developer Tools:**
+   Press `F12` (or right-click anywhere on the page and click **Inspect**).
+5. **Inspect Console Output:**
+   Switch to the **Console** tab.
+   Look for the confirmation log:
+   ```
+   [SentinelGuard] Content script loaded.
+   ```
+6. **Verify Network Isolation:**
+   Switch to the **Network** tab and refresh (`F5`). Verify that zero outbound telemetry or background requests are generated by SentinelGuard.
+
+---
+
+## 17. Test Results
 
 | Test Case | Method | Expected Output | Status |
 |---|---|---|---|
@@ -401,27 +474,35 @@ Since Chrome browser runtime execution requires a graphical desktop session, fol
 | File path resolution | Static verification | All files exist at expected paths | **PASS** |
 | Manifest V3 compliance | Chrome MV3 spec check | Uses `service_worker`, `action`, no deprecated fields | **PASS** |
 | Privacy invariant check | Source code inspection | No event listeners for keydown/mousemove/input | **PASS** |
+| Extension loads in Chrome | Manual unpacked load (`chrome://extensions`) | Extension card appears without errors | **PASS** |
+| Service worker initializes | DevTools inspection of background worker | `[SentinelGuard] Service worker initialized.` | **PASS** |
+| Popup UI opens | Toolbar icon click | 300px card renders correctly | **PASS** |
+| Popup toggle visual switch | Interactive UI toggle click | Visual switch between ON/OFF and ACTIVE/PAUSED | **PASS** |
+| Content script injection on `http://localhost:3000/` | Manual browser inspection on `test-page` | `[SentinelGuard] Content script loaded.` in Console | **PENDING MANUAL VERIFICATION** |
 
 ---
 
-## 17. Problems Encountered and Fixes
+## 18. Problems Encountered and Fixes
 
 - **Challenge:** Manifest V3 strictly forbids inline `<script>` tags in `popup.html` due to Content Security Policy (CSP).  
   **Solution:** Separated logic into `extension/popup/popup.js` and loaded it via `<script src="popup.js"></script>`.
 - **Challenge:** Avoiding unnecessary browser permissions while retaining testability on local environments.  
   **Solution:** Used precise match patterns `http://localhost/*` and `http://127.0.0.1/*` rather than `<all_urls>`, maintaining strict least-privilege principles.
+- **Challenge:** Port 3000 had no running listener, causing Chrome to display `chrome-error://chromewebdata/` where content scripts are restricted by browser policy.  
+  **Solution:** Created a minimal, dependency-free static test page in `test-page/index.html` served via `python -m http.server 3000 --directory test-page`.
 
 ---
 
-## 18. Decisions Made and Rationale
+## 19. Decisions Made and Rationale
 
 1. **Vanilla JavaScript over Bundlers:** Avoided Webpack, Vite, or TypeScript in Phase 1. An unpacked Manifest V3 extension runs native ES6 JavaScript without compilation steps, eliminating build tool complexity and making code immediately inspectable.
 2. **Minimal Permissions:** Declared 0 extra permissions in `manifest.json`. Storage and messaging permissions are deferred until the phases that actually require them.
 3. **Dark Theme for Popup:** Implemented an enterprise cybersecurity aesthetic (slate, dark blue, emerald accents) to give the extension a polished look from the first scaffold.
+4. **Built-in Python HTTP Server for Test Harness:** Avoided installing temporary npm packages (`serve`, `http-server`, `express`). Standard library `python -m http.server` requires zero new project dependencies.
 
 ---
 
-## 19. What Is Still PLANNED
+## 20. What Is Still PLANNED
 
 The following capabilities are **NOT implemented** and remain **PLANNED**:
 - Mouse movement coordinate sampling and trajectory metrics.
@@ -436,7 +517,7 @@ The following capabilities are **NOT implemented** and remain **PLANNED**:
 
 ---
 
-## 20. What Phase 2 Will Implement
+## 21. What Phase 2 Will Implement
 
 Phase 2 will be determined in coordination with the team:
 - Member 1 will prepare the behavioral event capture modules (mouse tracking and keystroke timing engines) compliant with `docs/PRIVACY.md`.
@@ -444,6 +525,6 @@ Phase 2 will be determined in coordination with the team:
 
 ---
 
-*Report filed: 2026-09-09*  
-*Phase 1 Status: ✅ COMPLETE*  
+*Report updated: 2026-09-10*  
+*Phase 1 Status: ⏳ PENDING MANUAL VERIFICATION (Content Script Injection on Localhost:3000)*  
 *Author: Member 1 (Browser Extension & Signal Capture)*

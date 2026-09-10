@@ -85,6 +85,8 @@ SentinelGuard-/
 │   └── reports/
 │       ├── PHASE-00-INSPECTION.md
 │       └── PHASE-01-EXTENSION-SCAFFOLDING.md
+├── test-page/           ← [TEST HARNESS] Minimal static page for Phase 1 content-script verification
+│   └── index.html
 ├── .gitignore
 └── README.md            ← This file
 ```
