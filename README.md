@@ -39,12 +39,12 @@ SentinelGuard is a four-component system that:
 PHASE 0 — COMPLETE   ✅  Repository inspection & documentation foundation
 PHASE 1 — COMPLETE   ✅  Browser extension scaffold (Member 1)
 PHASE 2 — COMPLETE   ✅  Extension runtime messaging pipeline (Member 1)
-PHASE 3 — PENDING    ⏳  Behavioral signal capture & Django backend (Members 1 & 2)
-PHASE 4 — PENDING    ⏳  Adaptive security + OTP & admin dashboard (Members 3 & 4)
+PHASE 3 — COMPLETE   ✅  Session & event identity foundation (Member 1)
+PHASE 4 — PENDING    ⏳  Behavioral signal capture & Django backend (Members 1 & 2)
 PHASE 5 — PENDING    ⏳  Integration & end-to-end testing (all members)
 ```
 
-> **Current Implementation Note:** The Chrome Manifest V3 browser extension scaffold and internal runtime messaging pipeline (`extension/`) are **IMPLEMENTED** and manually verified. The extension initializes the service worker, content script, popup UI, and transmits safe runtime IPC messages. **Behavioral signal capture (mouse, keystrokes, form telemetry) is NOT implemented yet** and remains PLANNED. All backend, ML, security, and dashboard components are PLANNED.
+> **Current Implementation Note:** The Chrome Manifest V3 browser extension scaffold, runtime messaging pipeline, and session/event identity envelope (`extension/`) are **IMPLEMENTED** and manually verified in Google Chrome. The extension generates opaque cryptographic session/event IDs (`sess_<uuid>`, `evt_<uuid>`), isolates sessions per page load, and validates structured event envelopes over internal IPC. **Behavioral signal capture (mouse, keystrokes, form telemetry) is NOT implemented yet** and remains PLANNED. All backend, ML, security, and dashboard components are PLANNED.
 
 ---
 
@@ -82,20 +82,39 @@ Member 1 has delivered and manually verified one-way internal runtime messaging 
 
 ---
 
+## Implemented Session & Event Identity Foundation (Phase 3)
+
+Member 1 has delivered and manually verified the session and event identity pipeline (`extension/utils/identity.js`):
+
+- **Centralized Identity Module**: Shared `SentinelIdentity` module provides a single source of truth for cryptographic UUID v4 identifier generation (`generateSessionId()`, `generateEventId()`), envelope assembly (`createEventEnvelope()`), and gateway schema validation (`validateEventEnvelope()`).
+- **Opaque Session Scoping**: Session IDs (`sess_<uuid-v4>`) are held in content script private memory per page observation lifecycle. Multiple tabs and page reloads maintain completely isolated, unlinked session contexts. Zero PII, device IDs, or cookies used.
+- **Unique Event Identity**: Every telemetry event receives an immutable `event_id` (`evt_<uuid-v4>`) and positive integer timestamp.
+- **Service Worker Gateway Validation**: The background service worker validates the envelope structure against strict type/format rules before acknowledging or logging.
+- **Manual Verification Summary (Google Chrome)**:
+  - Initial Page Load: Service worker received and validated `TEST_EVENT` with unique `session_id`, `event_id`, and valid timestamp: **PASS**
+  - Page Reload (`F5`): Service worker confirmed second `TEST_EVENT` with rolled-over, distinct `session_id` and fresh `event_id`: **PASS**
+  - Session lifecycle: Proved clean session rollover without persistent state or cross-session leakage: **PASS**
+  - Network isolation: Zero outbound network/telemetry calls: **PASS**
+- **Safety Invariant**: No mouse coordinates, keystroke timings, login detection, event buffering, or backend API transmission implemented. All behavioral signal capture remains strictly PLANNED.
+
+---
+
 ## Repository Structure
 
 ```
 SentinelGuard-/
-├── extension/           ← [IMPLEMENTED - Scaffold] Member 1: Chrome browser extension
+├── extension/           ← [IMPLEMENTED] Member 1: Chrome browser extension
 │   ├── manifest.json
 │   ├── background/
 │   │   └── service-worker.js
 │   ├── content/
 │   │   └── content.js
-│   └── popup/
-│       ├── popup.html
-│       ├── popup.css
-│       └── popup.js
+│   ├── popup/
+│   │   ├── popup.html
+│   │   ├── popup.css
+│   │   └── popup.js
+│   └── utils/
+│       └── identity.js  ← [IMPLEMENTED - Phase 3] Session & event ID generation & envelope validation
 ├── backend/             ← [PLANNED] Member 2: Django REST API + ML model
 ├── security/            ← [PLANNED] Member 3: Adaptive security + OTP
 ├── dashboard/           ← [PLANNED] Member 4: Admin dashboard + demo page
@@ -106,7 +125,9 @@ SentinelGuard-/
 │   ├── PRIVACY.md
 │   └── reports/
 │       ├── PHASE-00-INSPECTION.md
-│       └── PHASE-01-EXTENSION-SCAFFOLDING.md
+│       ├── PHASE-01-EXTENSION-SCAFFOLDING.md
+│       ├── PHASE-02-MESSAGING.md
+│       └── PHASE-03-SESSION-IDENTITY.md
 ├── test-page/           ← [TEST HARNESS] Minimal static page for Phase 1 content-script verification
 │   └── index.html
 ├── .gitignore
@@ -157,6 +178,7 @@ All project documentation lives in [`docs/`](./docs/README.md).
 | [`docs/reports/PHASE-00-INSPECTION.md`](./docs/reports/PHASE-00-INSPECTION.md) | Phase 0 inspection report |
 | [`docs/reports/PHASE-01-EXTENSION-SCAFFOLDING.md`](./docs/reports/PHASE-01-EXTENSION-SCAFFOLDING.md) | Phase 1 extension scaffolding report |
 | [`docs/reports/PHASE-02-MESSAGING.md`](./docs/reports/PHASE-02-MESSAGING.md) | Phase 2 runtime messaging verification report |
+| [`docs/reports/PHASE-03-SESSION-IDENTITY.md`](./docs/reports/PHASE-03-SESSION-IDENTITY.md) | Phase 3 session & event identity report |
 
 ---
 

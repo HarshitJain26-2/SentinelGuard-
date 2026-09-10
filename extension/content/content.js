@@ -1,9 +1,9 @@
 /**
  * SentinelGuard — Content Script
  * 
- * Phase 2 Scope:
- * - Content-script-to-service-worker one-way runtime messaging verification.
- * - Dispatches a single minimal test event to verify communication channel.
+ * Phase 3 Scope:
+ * - Session and event identity initialization using SentinelIdentity utility.
+ * - Dispatches a structured TEST_EVENT envelope over runtime messaging.
  * 
  * Safety & Privacy Notice:
  * - NO mouse movement tracking
@@ -15,11 +15,24 @@
 
 console.log("[SentinelGuard] Content script loaded.");
 
-// Phase 2: Send a minimal, safe test event to service worker
-const testPayload = {
-  type: "TEST_EVENT",
-  timestamp: Date.now()
-};
+// Generate an isolated, opaque session ID for this page observation lifecycle
+const currentSessionId = (typeof SentinelIdentity !== "undefined")
+  ? SentinelIdentity.generateSessionId()
+  : ("sess_" + crypto.randomUUID());
+
+// Construct a structured development test event envelope
+const testPayload = (typeof SentinelIdentity !== "undefined")
+  ? SentinelIdentity.createEventEnvelope({
+      sessionId: currentSessionId,
+      eventType: "TEST_EVENT"
+    })
+  : {
+      type: "TEST_EVENT",
+      event_type: "TEST_EVENT",
+      event_id: "evt_" + crypto.randomUUID(),
+      session_id: currentSessionId,
+      timestamp: Date.now()
+    };
 
 chrome.runtime.sendMessage(testPayload, () => {
   if (chrome.runtime.lastError) {

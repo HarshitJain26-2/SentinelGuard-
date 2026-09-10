@@ -250,14 +250,45 @@ Member 2 sign-off: ________________  Date: ________
 
 ---
 
+---
+
+## Phase 3 Internal Event Envelope (IMPLEMENTED)
+
+While the top-level payload structure above defines the **provisional future backend transmission format** (PLANNED), Phase 3 establishes the internal **Runtime IPC Event Envelope** used between the content script and background service worker (`extension/utils/identity.js`):
+
+```json
+{
+  "type": "TEST_EVENT",
+  "event_type": "TEST_EVENT",
+  "event_id": "evt_<uuid-v4>",
+  "session_id": "sess_<uuid-v4>",
+  "timestamp": 1789021409516,
+  "payload": {}
+}
+```
+
+| Field | Type | Status | Description |
+|---|---|---|---|
+| `event_id` | `string (evt_<uuid>)` | **IMPLEMENTED (Phase 3)** | Unique RFC 4122 v4 identifier generated per event instance |
+| `session_id` | `string (sess_<uuid>)` | **IMPLEMENTED (Phase 3)** | Opaque RFC 4122 v4 identifier generated per page observation lifecycle |
+| `event_type` | `string` | **IMPLEMENTED (Phase 3)** | Uppercase event discriminator (`TEST_EVENT`) |
+| `timestamp` | `integer` | **IMPLEMENTED (Phase 3)** | Milliseconds since Unix epoch (`Date.now()`) |
+| `payload` | `object` | **IMPLEMENTED (Phase 3)** | Event-specific data container (empty in Phase 3; all behavioral signals PLANNED) |
+
+All behavioral signal sub-objects (`signals.mouse`, `signals.keyboard`, `signals.form_interaction`) remain **PLANNED** for future phases.
+
+---
+
 ## Change Log
 
 | Version | Date | Author | Change |
 |---------|------|--------|--------|
 | 0.1 (PROVISIONAL) | 2026-09-09 | Member 1 | Initial draft for Member 2 review |
+| 0.2 (IMPLEMENTED)  | 2026-09-10 | Member 1 | Added Phase 3 Internal Runtime IPC Event Envelope |
 
 ---
 
-*Last updated: Phase 0 — Documentation Foundation*
+*Last updated: Phase 3 — Session & Event Identity Foundation*
 *Primary author: Member 1*
 *Required reviewer: Member 2*
+

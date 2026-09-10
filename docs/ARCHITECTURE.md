@@ -1,8 +1,8 @@
 # SentinelGuard — System Architecture
 
-> **STATUS: PARTIALLY IMPLEMENTED (Phases 1 & 2 Complete)**
+> **STATUS: PARTIALLY IMPLEMENTED (Phases 1, 2 & 3 Complete — Manually Verified)**
 > This document describes the architecture of SentinelGuard.
-> **Implemented components:** Manifest V3 extension scaffold (`extension/manifest.json`), content script scaffold (`extension/content/content.js`), background service worker scaffold (`extension/background/service-worker.js`), popup UI (`extension/popup/`), local test page / verification environment (`test-page/index.html`), and Content Script ↔ Service Worker runtime messaging (`extension/content/content.js` → `extension/background/service-worker.js`).
+> **Implemented components:** Manifest V3 extension scaffold (`extension/manifest.json`), content script scaffold (`extension/content/content.js`), background service worker scaffold (`extension/background/service-worker.js`), popup UI (`extension/popup/`), local test page / verification environment (`test-page/index.html`), Content Script ↔ Service Worker runtime messaging, Session Identity, Event Identity, and Event Envelope (`extension/utils/identity.js`).
 > **Planned components:** Behavioral signal capture, mouse telemetry, typing rhythm telemetry, login interaction detection, event batching, backend API transmission, Django backend, ML model, adaptive security & OTP, admin dashboard.
 > All components not explicitly marked IMPLEMENTED remain PLANNED.
 
@@ -18,7 +18,7 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 
 | Component | Member | Status |
 |-----------|--------|--------|
-| Browser Extension (Scaffold) | **Member 1** | **IMPLEMENTED** |
+| Browser Extension (Scaffold, Messaging, Identity) | **Member 1** | **IMPLEMENTED (Phases 1, 2 & 3)** |
 | Local Test Page / Verification Environment | **Member 1** | **IMPLEMENTED** |
 | Behavioral Signal Capture | **Member 1** | PLANNED |
 | Django Backend + ML Risk Model | **Member 2** | PLANNED |
@@ -127,6 +127,9 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 | Typing Rhythm Telemetry | Content script keyboard listener | PLANNED | Measures dwell/flight timing (no key values) |
 | Login Interaction Detection | Content script form hooks | PLANNED | Detects interaction with login fields |
 | Content Script ↔ Service Worker Event Messaging | Extension runtime messaging | **IMPLEMENTED — PHASE 2** | Passes runtime messages from content script to service worker |
+| Session Identity | `extension/utils/identity.js` | **IMPLEMENTED — PHASE 3 (Manually Verified)** | Generates opaque, cryptographically random session IDs (`sess_<uuid>`) |
+| Event Identity | `extension/utils/identity.js` | **IMPLEMENTED — PHASE 3 (Manually Verified)** | Generates unique UUID v4 event IDs (`evt_<uuid>`) for all telemetry events |
+| Event Envelope | `extension/utils/identity.js` | **IMPLEMENTED — PHASE 3 (Manually Verified)** | Standardized envelope schema and validation for IPC events |
 | Event Batching | `extension/utils/signal_buffer.js` (planned) | PLANNED | Buffers and batches captured events |
 | Backend API Transmission | Service worker fetch/POST | PLANNED | Sends batched events to Django backend API |
 
