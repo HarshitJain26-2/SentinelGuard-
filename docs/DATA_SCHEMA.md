@@ -273,9 +273,64 @@ While the top-level payload structure above defines the **provisional future bac
 | `session_id` | `string (sess_<uuid>)` | **IMPLEMENTED (Phase 3)** | Opaque RFC 4122 v4 identifier generated per page observation lifecycle |
 | `event_type` | `string` | **IMPLEMENTED (Phase 3)** | Uppercase event discriminator (`TEST_EVENT`) |
 | `timestamp` | `integer` | **IMPLEMENTED (Phase 3)** | Milliseconds since Unix epoch (`Date.now()`) |
-| `payload` | `object` | **IMPLEMENTED (Phase 3)** | Event-specific data container (empty in Phase 3; all behavioral signals PLANNED) |
+| `payload` | `object` | **IMPLEMENTED (Phase 3)** | Event-specific data container (empty in Phase 3) |
 
-All behavioral signal sub-objects (`signals.mouse`, `signals.keyboard`, `signals.form_interaction`) remain **PLANNED** for future phases.
+---
+
+## Phase 4 Mouse Behavioral Telemetry Internal Event (IMPLEMENTED)
+
+In Phase 4, the internal Runtime IPC event stream introduces real behavioral signal extraction for mouse dynamics (`MOUSE_BEHAVIOR`). 
+
+**Scope Status:**
+- **IMPLEMENTED (Phase 4):** Content script feature extraction, bounded in-memory sampling buffer (max 25 points, 50 ms / 20 Hz throttled), ephemeral coordinate discard, and service worker validation gateway.
+- **PLANNED (Future Phases):** Backend HTTP POST transmission, event batching over network, server-side feature store, ML classification model, bot-risk scoring, typing rhythm telemetry, and adaptive OTP challenge.
+
+> [!IMPORTANT]
+> **Data Tier Separation (Raw Temporary Data vs. Derived Telemetry):**
+> - **RAW TEMPORARY DATA:** Cursor positions (`clientX`, `clientY`) and timestamps are captured exclusively inside an ephemeral, in-memory array (`movementBuffer`, max 25 points) in `content.js`. They are **never** persisted to storage, **never** logged, and **never** transmitted across runtime IPC. The buffer is wiped immediately after feature computation.
+> - **DERIVED TELEMETRY:** The background service worker receives **only** the 10 compact derived mathematical metrics (`movement_count`, `total_distance`, `movement_duration`, `average_velocity`, `maximum_velocity`, `velocity_variance`, `direction_change_count`, `average_direction_change`, `path_efficiency`, `straightness_ratio`). The service worker never receives or reconstructs raw coordinates.
+
+### Internal Event Envelope (`MOUSE_BEHAVIOR`)
+
+```json
+{
+  "type": "MOUSE_BEHAVIOR",
+  "event_type": "MOUSE_BEHAVIOR",
+  "event_id": "evt_4a712f20-b49d-4e2a-89aa-09633e9d41b2",
+  "session_id": "sess_8e0f7ca0-90cc-4969-9ce5-cfe02d277dbc",
+  "timestamp": 1789024800123,
+  "payload": {
+    "movement_count": 25,
+    "total_distance": 642.1523,
+    "average_velocity": 0.5137,
+    "maximum_velocity": 1.4820,
+    "velocity_variance": 0.1245,
+    "direction_change_count": 3,
+    "average_direction_change": 0.4215,
+    "path_efficiency": 0.8842,
+    "straightness_ratio": 0.9120,
+    "movement_duration": 1250
+  }
+}
+```
+
+### Feature Dictionary Specification
+
+| Feature Key | Type | Unit | Range | Mathematical / Algorithmic Definition | Edge Case / Fallback Handling |
+|---|---|---|---|---|---|
+| `movement_count` | `integer` | count | $\ge 2$ | Number of sampled movement points $N$ within the active gesture window. | Windows with $N < 2$ are discarded before emission. |
+| `total_distance` | `float` | pixels (px) | $\ge 0.0$ | Cumulative Euclidean distance: $\sum_{i=1}^{N-1} \sqrt{(x_{i+1}-x_i)^2 + (y_{i+1}-y_i)^2}$. | $0.0$ if coordinates are stationary or identical. |
+| `average_velocity` | `float` | px / ms | $\ge 0.0$ | Mean trajectory speed: $\frac{\text{total\_distance}}{\text{movement\_duration}}$. | $0.0$ if duration $\le 0$ or distance is $0.0$. |
+| `maximum_velocity` | `float` | px / ms | $\ge 0.0$ | Maximum instantaneous segment speed: $\max_i \left( \frac{\Delta d_i}{\max(\Delta t_i, 1)} \right)$. | $0.0$ if no segment has positive duration. |
+| `velocity_variance` | `float` | $(\text{px}/\text{ms})^2$ | $\ge 0.0$ | Sample variance of segment velocities: $\frac{1}{M} \sum_{i=1}^M (v_i - \bar{v})^2$. | $0.0$ if fewer than 2 segments exist. |
+| `direction_change_count` | `integer` | count | $\ge 0$ | Count of consecutive segment transitions where angular deflection $> \frac{\pi}{6}$ rad ($30^\circ$). | $0$ if trajectory is straight, stationary, or $N < 3$. |
+| `average_direction_change` | `float` | radians | $[0.0, \pi]$ | Mean absolute angular deflection across all valid segment transitions. | $0.0$ if fewer than 2 non-zero displacement segments exist. |
+| `path_efficiency` | `float` | ratio | $[0.0, 1.0]$ | Ratio of direct Euclidean chord displacement to total distance: $\frac{\|P_N - P_1\|}{\text{total\_distance}}$. | $0.0$ if total distance is $0.0$. Clamped to $[0.0, 1.0]$. |
+| `straightness_ratio` | `float` | ratio | $[0.0, 1.0]$ | Complement of normalized maximum orthogonal chord deviation: $1 - \frac{d_{\text{max}}}{\|P_N - P_1\|}$. | Special case: If start and end coordinates are identical ($P_1 == P_N$, closed loop), ratio is defined as $0.0$. Clamped to $[0.0, 1.0]$. |
+| `movement_duration` | `integer` | ms | $\ge 0$ | Total elapsed time: $t_N - t_1$. | $0$ if timestamps are identical or non-positive. |
+
+> [!NOTE]
+> **Signal Distinction:** These 10 features represent raw behavioral kinematic signals. None of these features individually classify an interaction as human or bot; bot vs. human classification belongs exclusively to Member 2's planned ML inference layer.
 
 ---
 
@@ -285,10 +340,11 @@ All behavioral signal sub-objects (`signals.mouse`, `signals.keyboard`, `signals
 |---------|------|--------|--------|
 | 0.1 (PROVISIONAL) | 2026-09-09 | Member 1 | Initial draft for Member 2 review |
 | 0.2 (IMPLEMENTED)  | 2026-09-10 | Member 1 | Added Phase 3 Internal Runtime IPC Event Envelope |
+| 0.3 (IMPLEMENTED)  | 2026-09-23 | Member 1 | Added Phase 4 Mouse Behavioral Telemetry Internal Event Schema |
 
 ---
 
-*Last updated: Phase 3 — Session & Event Identity Foundation*
+*Last updated: Phase 4 — Mouse Behavioral Telemetry*
 *Primary author: Member 1*
 *Required reviewer: Member 2*
 

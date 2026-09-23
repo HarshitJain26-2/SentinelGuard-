@@ -40,11 +40,11 @@ PHASE 0 — COMPLETE   ✅  Repository inspection & documentation foundation
 PHASE 1 — COMPLETE   ✅  Browser extension scaffold (Member 1)
 PHASE 2 — COMPLETE   ✅  Extension runtime messaging pipeline (Member 1)
 PHASE 3 — COMPLETE   ✅  Session & event identity foundation (Member 1)
-PHASE 4 — PENDING    ⏳  Behavioral signal capture & Django backend (Members 1 & 2)
+PHASE 4 — IMPLEMENTED ⏳  Mouse behavioral telemetry (Member 1) [PENDING MANUAL VERIFICATION]
 PHASE 5 — PENDING    ⏳  Integration & end-to-end testing (all members)
 ```
 
-> **Current Implementation Note:** The Chrome Manifest V3 browser extension scaffold, runtime messaging pipeline, and session/event identity envelope (`extension/`) are **IMPLEMENTED** and manually verified in Google Chrome. The extension generates opaque cryptographic session/event IDs (`sess_<uuid>`, `evt_<uuid>`), isolates sessions per page load, and validates structured event envelopes over internal IPC. **Behavioral signal capture (mouse, keystrokes, form telemetry) is NOT implemented yet** and remains PLANNED. All backend, ML, security, and dashboard components are PLANNED.
+> **Current Implementation Note:** The Chrome Manifest V3 browser extension scaffold, runtime messaging pipeline, session/event identity envelope, and **Mouse Behavioral Telemetry** (`extension/`) are **IMPLEMENTED** (with Phase 4 pending manual verification in Google Chrome). The extension captures cursor movement dynamics, extracts 10 privacy-preserving kinematic features, bounds coordinates to short-lived in-memory buffers (cleared upon extraction), and validates envelopes at the service worker gateway. **Keyboard telemetry, login detection, backend API, ML risk scoring, and dashboard remain PLANNED.**
 
 ---
 
@@ -99,6 +99,21 @@ Member 1 has delivered and manually verified the session and event identity pipe
 
 ---
 
+## Implemented Mouse Behavioral Telemetry (Phase 4 — Pending Manual Verification)
+
+Member 1 has delivered the first behavioral signal collection layer (`extension/utils/mouse-features.js`, `extension/content/content.js`, `extension/background/service-worker.js`):
+
+- **Passive Throttled Sampling**: Mouse movements sampled at 50 ms intervals (~20 Hz engineering trade-off balancing human motor dynamics against CPU overhead).
+- **Ephemeral Bounded Buffering**: In-memory buffer capped at 25 points (~1.25s continuous movement) with a 500 ms idle debounce timer.
+- **Client-Side Behavioral Feature Extraction**: Computes 10 privacy-preserving kinematic features (`movement_count`, `total_distance`, `average_velocity`, `maximum_velocity`, `velocity_variance`, `direction_change_count`, `average_direction_change`, `path_efficiency`, `straightness_ratio`, `movement_duration`).
+- **Coordinate Privacy**: Raw coordinates exist only temporarily in memory during sampling and are immediately purged after feature extraction. Zero raw coordinates are persisted, logged, or sent over IPC.
+- **Envelope Integration**: Reuses Phase 3 `SentinelIdentity.createEventEnvelope()` with `currentSessionId` and `eventType: "MOUSE_BEHAVIOR"`.
+- **Protection State Synchronization**: Extension popup toggle synchronizes with `chrome.storage.local`. When protection is toggled OFF, sampling immediately ceases, buffers are cleared, and pending telemetry is suppressed.
+- **Service Worker Validation Gateway**: Background worker validates envelope structure and enforces finite numerical boundaries on all 10 feature values.
+- **Safety Invariant**: Zero keyboard/keystroke capture, zero login form detection, zero DOM scraping, zero network/backend transmission.
+
+---
+
 ## Repository Structure
 
 ```
@@ -114,7 +129,8 @@ SentinelGuard-/
 │   │   ├── popup.css
 │   │   └── popup.js
 │   └── utils/
-│       └── identity.js  ← [IMPLEMENTED - Phase 3] Session & event ID generation & envelope validation
+│       ├── identity.js        ← [IMPLEMENTED - Phase 3] Session & event ID generation & envelope validation
+│       └── mouse-features.js  ← [IMPLEMENTED - Phase 4] Mathematical feature extraction & payload validation
 ├── backend/             ← [PLANNED] Member 2: Django REST API + ML model
 ├── security/            ← [PLANNED] Member 3: Adaptive security + OTP
 ├── dashboard/           ← [PLANNED] Member 4: Admin dashboard + demo page

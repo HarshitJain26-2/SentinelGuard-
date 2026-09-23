@@ -1,9 +1,9 @@
 # SentinelGuard — System Architecture
 
-> **STATUS: PARTIALLY IMPLEMENTED (Phases 1, 2 & 3 Complete — Manually Verified)**
+> **STATUS: PARTIALLY IMPLEMENTED (Phases 1, 2 & 3 Complete; Phase 4 Mouse Telemetry IMPLEMENTED — PENDING MANUAL VERIFICATION)**
 > This document describes the architecture of SentinelGuard.
-> **Implemented components:** Manifest V3 extension scaffold (`extension/manifest.json`), content script scaffold (`extension/content/content.js`), background service worker scaffold (`extension/background/service-worker.js`), popup UI (`extension/popup/`), local test page / verification environment (`test-page/index.html`), Content Script ↔ Service Worker runtime messaging, Session Identity, Event Identity, and Event Envelope (`extension/utils/identity.js`).
-> **Planned components:** Behavioral signal capture, mouse telemetry, typing rhythm telemetry, login interaction detection, event batching, backend API transmission, Django backend, ML model, adaptive security & OTP, admin dashboard.
+> **Implemented components:** Manifest V3 extension scaffold (`extension/manifest.json`), content script (`extension/content/content.js`), background service worker (`extension/background/service-worker.js`), popup UI (`extension/popup/`), local test page / verification environment (`test-page/index.html`), Content Script ↔ Service Worker runtime messaging, Session Identity, Event Identity, and Event Envelope (`extension/utils/identity.js`), and Mouse Behavioral Telemetry (`extension/utils/mouse-features.js` & `extension/content/content.js`).
+> **Planned components:** Typing rhythm telemetry, login interaction detection, event batching, backend API transmission, Django backend, ML model, adaptive security & OTP, admin dashboard.
 > All components not explicitly marked IMPLEMENTED remain PLANNED.
 
 ---
@@ -20,7 +20,8 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 |-----------|--------|--------|
 | Browser Extension (Scaffold, Messaging, Identity) | **Member 1** | **IMPLEMENTED (Phases 1, 2 & 3)** |
 | Local Test Page / Verification Environment | **Member 1** | **IMPLEMENTED** |
-| Behavioral Signal Capture | **Member 1** | PLANNED |
+| Mouse Behavioral Telemetry | **Member 1** | **IMPLEMENTED — PHASE 4 / PENDING MANUAL VERIFICATION** |
+| Typing Rhythm Telemetry | **Member 1** | PLANNED |
 | Django Backend + ML Risk Model | **Member 2** | PLANNED |
 | Adaptive Security Logic + OTP | **Member 3** | PLANNED |
 | Admin Dashboard + Demo Login Page | **Member 4** | PLANNED |
@@ -122,8 +123,7 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 | Background Service Worker Scaffold | `extension/background/service-worker.js` | **IMPLEMENTED** | Background service worker; initializes lifecycle |
 | Popup UI | `extension/popup/popup.html`, `popup.css`, `popup.js` | **IMPLEMENTED** | Displays ON/OFF toggle UI and status badge |
 | Local Test Page / Verification Environment | `test-page/index.html` | **IMPLEMENTED** | Minimal static page to verify localhost:3000 injection |
-| Behavioral Signal Capture | Content script listeners | PLANNED | Observes user interaction on login form |
-| Mouse Telemetry | Content script mouse listener | PLANNED | Captures cursor movement coordinates & velocity |
+| Mouse Behavioral Telemetry | `extension/utils/mouse-features.js`, `extension/content/content.js` | **IMPLEMENTED — PHASE 4 / PENDING MANUAL VERIFICATION** | Captures sampled cursor movement, extracts 10 behavioral biometrics features, wraps in envelope |
 | Typing Rhythm Telemetry | Content script keyboard listener | PLANNED | Measures dwell/flight timing (no key values) |
 | Login Interaction Detection | Content script form hooks | PLANNED | Detects interaction with login fields |
 | Content Script ↔ Service Worker Event Messaging | Extension runtime messaging | **IMPLEMENTED — PHASE 2** | Passes runtime messages from content script to service worker |
@@ -133,12 +133,12 @@ SentinelGuard is a distributed, four-component system designed to detect and mit
 | Event Batching | `extension/utils/signal_buffer.js` (planned) | PLANNED | Buffers and batches captured events |
 | Backend API Transmission | Service worker fetch/POST | PLANNED | Sends batched events to Django backend API |
 
-**Signals captured (PLANNED — subject to privacy constraints in [`PRIVACY.md`](./PRIVACY.md)):**
+**Signals captured:**
 
-- Mouse movement coordinates and timing (PLANNED)
-- Typing inter-keystroke timing (NOT key values or characters) (PLANNED)
+- **Mouse Dynamics (IMPLEMENTED — Phase 4):** Ephemeral in-memory cursor coordinates sampled at ~20 Hz strictly within `content.js` to extract 10 derived kinematic features (`movement_count`, `total_distance`, `movement_duration`, `average_velocity`, `maximum_velocity`, `velocity_variance`, `direction_change_count`, `average_direction_change`, `path_efficiency`, `straightness_ratio`). Raw coordinates are never logged, never persisted, and never sent across IPC. The service worker receives derived telemetry, not raw coordinates.
+- Typing inter-keystroke timing (NOT key values or characters) (PLANNED — Phase 5)
 - Click events and timing (PLANNED)
-- Form field focus/blur events (PLANNED)
+- Form field focus/blur events (PLANNED — Phase 5)
 - Login form submission event (PLANNED)
 
 **Signals never captured:**
