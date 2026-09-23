@@ -199,3 +199,208 @@ class EventAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.json()["status"], "ACK")
         self.assertTrue(Event.objects.filter(event_id="evt_test_event_001").exists())
+
+
+from unittest.mock import patch
+from django.test import TestCase
+from .models import Score
+from ml.features import FEATURE_NAMES, extract_features_from_payload, FeatureExtractionError
+from ml.dataset import generate_synthetic_data
+from ml.train_model import train_and_evaluate
+from ml.inference import get_model, predict_risk
+
+
+class MLPipelineTests(TestCase):
+    """
+    Automated tests for ML Dataset, Feature Extraction, Training, and Inference.
+    """
+
+    def setUp(self):
+        self.sample_payload = {
+            "movement_count": 24,
+            "total_distance": 185.5,
+            "movement_duration": 650.0,
+            "average_velocity": 0.285,
+            "maximum_velocity": 0.55,
+            "velocity_variance": 0.032,
+            "direction_change_count": 4,
+            "average_direction_change": 0.38,
+            "path_efficiency": 0.82,
+            "straightness_ratio": 0.88,
+        }
+
+    def test_1_synthetic_dataset_generation(self):
+        """Synthetic dataset generator creates balanced, valid dataset with 10 features."""
+        df = generate_synthetic_data(n_samples=200, random_state=42)
+        self.assertEqual(len(df), 200)
+        expected_cols = FEATURE_NAMES + ["label"]
+        self.assertListEqual(list(df.columns), expected_cols)
+        self.assertEqual((df["label"] == 0).sum(), 100)
+        self.assertEqual((df["label"] == 1).sum(), 100)
+        self.assertFalse(df.isna().any().any())
+
+    def test_2_feature_extraction(self):
+        """Feature extraction correctly extracts 10 numeric values from payload."""
+        features = extract_features_from_payload(self.sample_payload)
+        self.assertEqual(len(features), 10)
+        self.assertTrue(all(isinstance(v, float) for v in features))
+        self.assertAlmostEqual(features[0], 24.0)
+        self.assertAlmostEqual(features[1], 185.5)
+
+    def test_3_feature_ordering(self):
+        """Feature extraction maintains strict FEATURE_NAMES order regardless of dict key order."""
+        reversed_payload = {k: self.sample_payload[k] for k in reversed(list(self.sample_payload.keys()))}
+        extracted = extract_features_from_payload(reversed_payload)
+        expected = [float(self.sample_payload[k]) for k in FEATURE_NAMES]
+        self.assertListEqual(extracted, expected)
+
+    def test_4_model_training(self):
+        """Model training executes and produces valid classification metrics."""
+        metrics = train_and_evaluate(save_model=False, n_samples=200, random_state=42)
+        self.assertIn("accuracy", metrics)
+        self.assertIn("roc_auc", metrics)
+        self.assertGreater(metrics["accuracy"], 0.70)
+        self.assertGreater(metrics["roc_auc"], 0.70)
+        self.assertIn("confusion_matrix", metrics)
+
+    def test_5_model_loading(self):
+        """Model artifact can be loaded and has expected classifier attributes."""
+        model = get_model()
+        self.assertIsNotNone(model)
+        self.assertTrue(hasattr(model, "predict_proba"))
+        self.assertEqual(model.n_features_in_, 10)
+
+    def test_6_risk_score_range(self):
+        """Inference produces risk score strictly within [0.0, 1.0]."""
+        features = extract_features_from_payload(self.sample_payload)
+        score = predict_risk(features)
+        self.assertIsInstance(score, float)
+        self.assertGreaterEqual(score, 0.0)
+        self.assertLessEqual(score, 1.0)
+
+    def test_7_missing_feature_rejection(self):
+        """Feature extraction rejects payloads missing required features."""
+        incomplete = dict(self.sample_payload)
+        del incomplete["total_distance"]
+        with self.assertRaises(FeatureExtractionError) as ctx:
+            extract_features_from_payload(incomplete)
+        self.assertIn("total_distance", str(ctx.exception))
+
+
+class MLScoringIntegrationTests(APITestCase):
+    """
+    Automated tests for Django Event Ingestion -> ML Scoring -> Score Persistence.
+    """
+
+    def setUp(self):
+        self.events_url = reverse("event-create")
+        self.valid_mouse_event = {
+            "type": "MOUSE_BEHAVIOR",
+            "event_type": "MOUSE_BEHAVIOR",
+            "event_id": "evt_ml_test_001",
+            "session_id": "sess_ml_test_001",
+            "timestamp": 1727101000000,
+            "payload": {
+                "movement_count": 25,
+                "total_distance": 140.0,
+                "movement_duration": 600,
+                "average_velocity": 0.233,
+                "maximum_velocity": 0.52,
+                "velocity_variance": 0.028,
+                "direction_change_count": 4,
+                "average_direction_change": 0.36,
+                "path_efficiency": 0.81,
+                "straightness_ratio": 0.87,
+            },
+        }
+
+    def test_8_valid_mouse_behavior_gets_scored(self):
+        """Valid MOUSE_BEHAVIOR ingestion automatically calculates risk score in API response."""
+        response = self.client.post(
+            self.events_url,
+            data=json.dumps(self.valid_mouse_event),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = response.json()
+        self.assertEqual(data["status"], "ACK")
+        self.assertIn("risk_score", data)
+        self.assertGreaterEqual(data["risk_score"], 0.0)
+        self.assertLessEqual(data["risk_score"], 1.0)
+
+    def test_9_score_is_persisted_in_database(self):
+        """Score record is persisted in SQLite with linked session, event, and explainability reasons."""
+        response = self.client.post(
+            self.events_url,
+            data=json.dumps(self.valid_mouse_event),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        score = Score.objects.get(session__session_id="sess_ml_test_001")
+        self.assertIsNotNone(score)
+        self.assertEqual(score.event.event_id, "evt_ml_test_001")
+        self.assertGreaterEqual(score.risk_score, 0.0)
+        self.assertLessEqual(score.risk_score, 1.0)
+        self.assertIsInstance(score.reasons, dict)
+
+    def test_10_duplicate_event_does_not_create_duplicate_scores(self):
+        """Duplicate event submission returns DUPLICATE and does not create duplicate Score records."""
+        res1 = self.client.post(
+            self.events_url,
+            data=json.dumps(self.valid_mouse_event),
+            content_type="application/json",
+        )
+        self.assertEqual(res1.status_code, status.HTTP_201_CREATED)
+
+        # Resend exact same event
+        res2 = self.client.post(
+            self.events_url,
+            data=json.dumps(self.valid_mouse_event),
+            content_type="application/json",
+        )
+        self.assertEqual(res2.status_code, status.HTTP_200_OK)
+        self.assertEqual(res2.json()["status"], "DUPLICATE")
+
+        self.assertEqual(Score.objects.filter(session__session_id="sess_ml_test_001").count(), 1)
+
+    def test_11_non_mouse_event_not_scored(self):
+        """TEST_EVENT is ingested into Event table but does not create a Score row."""
+        test_event = {
+            "event_id": "evt_test_no_score",
+            "session_id": "sess_test_no_score",
+            "event_type": "TEST_EVENT",
+            "timestamp": 1727101000000,
+            "payload": {"info": "handshake"},
+        }
+        response = self.client.post(
+            self.events_url,
+            data=json.dumps(test_event),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertNotIn("risk_score", response.json())
+        self.assertFalse(Score.objects.filter(session__session_id="sess_test_no_score").exists())
+
+    def test_12_ml_failure_does_not_destroy_original_event(self):
+        """ML inference failure logs error but preserves Event record and returns successful ACK."""
+        with patch("detection.ml_scoring.predict_risk", side_effect=RuntimeError("Simulated ML engine crash")):
+            fail_event = dict(self.valid_mouse_event)
+            fail_event["event_id"] = "evt_ml_fail_safe"
+            fail_event["session_id"] = "sess_ml_fail_safe"
+
+            response = self.client.post(
+                self.events_url,
+                data=json.dumps(fail_event),
+                content_type="application/json",
+            )
+            # Ingestion must still succeed
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(response.json()["status"], "ACK")
+
+            # Event must exist in database
+            self.assertTrue(Event.objects.filter(event_id="evt_ml_fail_safe").exists())
+
+            # Score was not created due to failure
+            self.assertFalse(Score.objects.filter(session__session_id="sess_ml_fail_safe").exists())
+

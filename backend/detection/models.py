@@ -47,13 +47,16 @@ class Score(models.Model):
     ]
 
     session = models.OneToOneField(Session, on_delete=models.CASCADE, related_name="score")
-    risk_score = models.FloatField()  # 0-100, higher = more human-like
-    tier = models.CharField(max_length=10, choices=TIER_CHOICES)
-    reasons = models.JSONField(blank=True, null=True)  # top contributing signals, for the "why flagged" panel
+    event = models.ForeignKey(Event, on_delete=models.SET_NULL, null=True, blank=True, related_name="scores")
+    risk_score = models.FloatField()  # 0.0 - 1.0, higher = more bot-like (class 1 probability)
+    tier = models.CharField(max_length=10, choices=TIER_CHOICES, blank=True, null=True)
+    reasons = models.JSONField(blank=True, null=True)  # top contributing signals, for explainability
     scored_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.session.session_id} -> {self.tier} ({self.risk_score})"
+        tier_str = f" -> {self.tier}" if self.tier else ""
+        return f"{self.session.session_id}{tier_str} (risk: {self.risk_score:.4f})"
+
 
 
 class Decision(models.Model):

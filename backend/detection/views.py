@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import EventInSerializer, EventOutSerializer
 from .models import Event
+from .ml_scoring import score_event
 
 
 class HealthCheckView(APIView):
@@ -19,6 +20,7 @@ class EventCreateView(APIView):
     """
     POST /api/events/
     Receives one event envelope from the extension's content/background script.
+    Saves the Event and triggers asynchronous-safe ML risk scoring.
     """
 
     def post(self, request):
@@ -29,10 +31,17 @@ class EventCreateView(APIView):
                 return Response({"status": "DUPLICATE"}, status=status.HTTP_200_OK)
 
             event = serializer.save()
+            score = score_event(event)
+
             out = EventOutSerializer(event)
-            return Response({"status": "ACK", "event": out.data}, status=status.HTTP_201_CREATED)
+            response_data = {"status": "ACK", "event": out.data}
+            if score is not None:
+                response_data["risk_score"] = score.risk_score
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         return Response(
             {"status": "REJECTED", "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
-        )
+        )
+
