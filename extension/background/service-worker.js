@@ -43,6 +43,48 @@ if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
   });
 }
 
+const BACKEND_EVENTS_URL = "http://127.0.0.1:8000/api/events/";
+
+/**
+ * Transmits a validated behavioral telemetry event envelope to the Django backend.
+ * 
+ * Safety & Privacy Notice:
+ * - Sends ONLY the existing event envelope (session_id, event_id, timestamp, derived features).
+ * - NEVER sends raw coordinates, keystrokes, passwords, or page content.
+ * - Does not retry aggressively or block on network failure.
+ */
+async function sendEventToBackend(envelope) {
+  if (!isProtectionEnabled) {
+    console.log("[SentinelGuard][DEBUG] Aborting backend transmission: protection OFF");
+    return;
+  }
+
+  console.log("[SentinelGuard] Sending MOUSE_BEHAVIOR event to backend.");
+
+  try {
+    const response = await fetch(BACKEND_EVENTS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(envelope)
+    });
+
+    if (response.status === 201) {
+      console.log("[SentinelGuard] Backend ACK: 201");
+    } else if (response.status === 200) {
+      console.log("[SentinelGuard] Backend duplicate: 200");
+    } else if (response.status === 400) {
+      console.warn("[SentinelGuard] Backend rejected event: 400");
+    } else {
+      console.warn(`[SentinelGuard] Backend responded with status: ${response.status}`);
+    }
+  } catch (error) {
+    // Network failure (e.g. backend server offline, connection refused)
+    console.warn("[SentinelGuard] Backend unavailable.");
+  }
+}
+
 function processMouseBehavior(message, sendResponse) {
   // 1. Validate envelope identity structure
   const envelopeValidation = (typeof SentinelIdentity !== "undefined")
@@ -78,10 +120,14 @@ function processMouseBehavior(message, sendResponse) {
   console.log("[SentinelGuard] average_velocity:", message.payload.average_velocity);
   console.log("[SentinelGuard] path_efficiency:", message.payload.path_efficiency);
 
+  // 4. Transmit validated envelope to Django backend
+  sendEventToBackend(message);
+
   if (sendResponse) {
     sendResponse({ status: "ACK" });
   }
 }
+
 
 // Listen for structured runtime events from content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
