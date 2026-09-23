@@ -5,6 +5,16 @@ from .serializers import EventInSerializer, EventOutSerializer
 from .models import Event
 
 
+class HealthCheckView(APIView):
+    """
+    GET /api/health/
+    Minimal backend health check endpoint for connectivity verification.
+    """
+
+    def get(self, request):
+        return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+
 class EventCreateView(APIView):
     """
     POST /api/events/
@@ -25,4 +35,4 @@ class EventCreateView(APIView):
         return Response(
             {"status": "REJECTED", "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
-        )
+        )

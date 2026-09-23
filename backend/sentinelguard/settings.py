@@ -25,7 +25,8 @@ SECRET_KEY = "django-insecure-88f@*h-g4d@*%5qv#)s_ecdx-rbl!+fh!59#g2+)b@w)tt!tz!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Local development allowed hosts
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -37,11 +38,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "detection",
+    "corsheaders",
     "rest_framework",
+    "detection",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -50,6 +53,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# CORS Configuration
+# WARNING: For local development and demo verification only. Must be restricted in production.
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = "sentinelguard.urls"
 
