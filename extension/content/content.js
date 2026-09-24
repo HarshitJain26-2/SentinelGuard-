@@ -367,6 +367,23 @@ if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage 
   }
 }
 
+// ============================================================
+// Session ID Bridge for Demo Login Page
+// ============================================================
+// Allows the demo login page to request the current session ID
+// via window.postMessage. Only shares the opaque UUID — no internal
+// extension state or API surface is exposed.
+
+window.addEventListener("message", (event) => {
+  if (event.source !== window) return;
+  if (event.data && event.data.type === "SentinelGuard:RequestSessionId") {
+    window.postMessage({
+      type: "SentinelGuard:SessionId",
+      sessionId: currentSessionId
+    }, "*");
+  }
+});
+
 // Register passive mousemove listener on window
 window.addEventListener("mousemove", handleMouseMove, { passive: true });
 

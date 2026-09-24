@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SentinelGuard — Demo Login</title>
+  <meta name="description" content="SentinelGuard AI-Driven Bot Defense — Demo Login Page">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --card-bg: #111827;
+      --card-border: #1e293b;
+      --input-bg: #0f172a;
+      --input-border: #334155;
+      --input-focus: #3b82f6;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --text-heading: #f8fafc;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.15);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.08);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.08);
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.08);
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+    }
+
+    .login-card {
+      max-width: 440px;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: white; font-weight: 700;
+    }
+
+    .brand-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-heading);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    .demo-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: var(--warning);
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-input::placeholder { color: #475569; }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      color: #fff;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 6px;
+    }
+
+    .btn:hover { opacity: 0.92; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-otp {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      margin-top: 12px;
+    }
+
+    /* Session Info */
+    .session-info {
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      word-break: break-all;
+    }
+
+    .session-info .label {
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .session-warning {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--warning);
+    }
+
+    /* Result Area */
+    .result-area {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .result-area.visible { display: block; }
+
+    .result-box {
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .result-box.analyzing {
+      background: var(--accent-glow);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: var(--accent);
+    }
+
+    .result-box.allowed {
+      background: var(--success-bg);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+
+    .result-box.otp-required {
+      background: var(--warning-bg);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--warning);
+    }
+
+    .result-box.blocked {
+      background: var(--danger-bg);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+
+    .result-box.verified {
+      background: var(--success-bg);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+
+    .result-box.error {
+      background: var(--danger-bg);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+
+    .result-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 400;
+    }
+
+    /* OTP Section */
+    .otp-section {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(245, 158, 11, 0.04);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+      border-radius: 8px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .otp-section.visible { display: block; }
+
+    .otp-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--warning);
+      margin-bottom: 4px;
+    }
+
+    .otp-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .otp-input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 20px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      letter-spacing: 0.3em;
+      text-align: center;
+      color: var(--text);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .otp-input:focus {
+      border-color: var(--warning);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+    }
+
+    .nav-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .nav-link a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .nav-link a:hover { text-decoration: underline; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <span class="demo-badge">Local Demo Only</span>
+    <div class="brand">
+      <div class="brand-icon">S</div>
+      <span class="brand-name">SentinelGuard</span>
+    </div>
+    <p class="subtitle">AI-Driven Bot & Credential-Stuffing Defense</p>
+
+    <!-- Login Form -->
+    <form id="loginForm" autocomplete="off">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" type="text" id="username" placeholder="demo-user" value="demo-user">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" type="password" id="password" placeholder="••••••••">
+      </div>
+      <button class="btn" type="submit" id="loginBtn">Sign In</button>
+    </form>
+
+    <!-- Session Identity -->
+    <div class="session-info" id="sessionInfo">
+      <span class="label">Session ID: </span>
+      <span id="sessionIdDisplay">Requesting from extension...</span>
+    </div>
+    <div class="session-warning" id="sessionWarning" style="display: none;">
+      ⚠ Extension not detected — using standalone session ID. Behavioral telemetry will not be linked.
+    </div>
+
+    <!-- Result Area -->
+    <div class="result-area" id="resultArea">
+      <div class="result-box" id="resultBox"></div>
+    </div>
+
+    <!-- OTP Verification Section -->
+    <div class="otp-section" id="otpSection">
+      <div class="otp-title">🔐 Step-Up Verification Required</div>
+      <div class="otp-hint">Enter the 6-digit code from the backend development console.</div>
+      <div class="form-group">
+        <input class="otp-input" type="text" id="otpInput" maxlength="6" placeholder="000000" autocomplete="off">
+      </div>
+      <button class="btn btn-otp" id="otpBtn" type="button">Verify OTP</button>
+    </div>
+
+    <div class="nav-link">
+      <a href="/dashboard/">Security Dashboard</a> · <a href="/">Test Page</a>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const BACKEND_URL = "http://127.0.0.1:8000";
+      const LOGIN_API = `${BACKEND_URL}/api/security/login/`;
+      const VERIFY_OTP_API = `${BACKEND_URL}/api/security/verify-otp/`;
+
+      // DOM elements
+      const loginForm = document.getElementById("loginForm");
+      const loginBtn = document.getElementById("loginBtn");
+      const usernameInput = document.getElementById("username");
+      const sessionIdDisplay = document.getElementById("sessionIdDisplay");
+      const sessionWarning = document.getElementById("sessionWarning");
+      const resultArea = document.getElementById("resultArea");
+      const resultBox = document.getElementById("resultBox");
+      const otpSection = document.getElementById("otpSection");
+      const otpInput = document.getElementById("otpInput");
+      const otpBtn = document.getElementById("otpBtn");
+
+      // State
+      let sessionId = null;
+      let currentChallengeId = null;
+      let extensionDetected = false;
+
+      // ========================================
+      // Session ID Bridge
+      // ========================================
+
+      // Listen for session ID response from extension content script
+      window.addEventListener("message", (event) => {
+        if (event.source !== window) return;
+        if (event.data && event.data.type === "SentinelGuard:SessionId" && event.data.sessionId) {
+          sessionId = event.data.sessionId;
+          extensionDetected = true;
+          sessionIdDisplay.textContent = sessionId;
+          sessionWarning.style.display = "none";
+        }
+      });
+
+      // Request session ID from extension
+      window.postMessage({ type: "SentinelGuard:RequestSessionId" }, "*");
+
+      // Fallback: if extension doesn't respond in 1.5 seconds, generate standalone ID
+      setTimeout(() => {
+        if (!extensionDetected) {
+          sessionId = "sess_" + crypto.randomUUID();
+          sessionIdDisplay.textContent = sessionId;
+          sessionWarning.style.display = "block";
+        }
+      }, 1500);
+
+      // ========================================
+      // UI Helpers
+      // ========================================
+
+      function showResult(cssClass, message, detail) {
+        resultArea.classList.add("visible");
+        resultBox.className = "result-box " + cssClass;
+        resultBox.innerHTML = message + (detail ? `<div class="result-detail">${detail}</div>` : "");
+      }
+
+      function hideResult() {
+        resultArea.classList.remove("visible");
+      }
+
+      function hideOTP() {
+        otpSection.classList.remove("visible");
+        otpInput.value = "";
+        currentChallengeId = null;
+      }
+
+      function showOTP(challengeId) {
+        currentChallengeId = challengeId;
+        otpSection.classList.add("visible");
+        otpInput.focus();
+      }
+
+      // ========================================
+      // Login Flow
+      // ========================================
+
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const username = usernameInput.value.trim() || "anonymous";
+
+        if (!sessionId) {
+          showResult("error", "❌ No session ID available", "Extension or fallback not initialized.");
+          return;
+        }
+
+        loginBtn.disabled = true;
+        hideOTP();
+        showResult("analyzing", '<span class="spinner"></span>Analyzing behavioral signals...', null);
+
+        try {
+          const response = await fetch(LOGIN_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              session_id: sessionId,
+              username: username
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.status === 200 && data.action === "ALLOW") {
+            showResult("allowed", "✅ Login Allowed", "Behavioral analysis indicates legitimate activity.");
+
+          } else if (response.status === 202 && data.action === "OTP") {
+            showResult("otp-required", "🔐 OTP Verification Required",
+              "Medium-risk behavior detected. Step-up authentication required.");
+            showOTP(data.challenge_id);
+
+          } else if (response.status === 403 && data.action === "BLOCK") {
+            showResult("blocked", "🚫 Access Blocked",
+              "High-risk behavioral pattern detected. Access denied.");
+
+          } else {
+            showResult("error", "⚠ Unexpected Response",
+              `Status: ${response.status} — ${data.error || data.message || "Unknown"}`);
+          }
+
+        } catch (err) {
+          showResult("error", "❌ Connection Failed",
+            "Could not reach backend at " + BACKEND_URL + ". Is Django running?");
+        } finally {
+          loginBtn.disabled = false;
+        }
+      });
+
+      // ========================================
+      // OTP Verification Flow
+      // ========================================
+
+      otpBtn.addEventListener("click", async () => {
+        const otpCode = otpInput.value.trim();
+
+        if (!otpCode || otpCode.length !== 6) {
+          showResult("error", "❌ Invalid OTP", "Please enter a 6-digit code.");
+          return;
+        }
+
+        if (!currentChallengeId) {
+          showResult("error", "❌ No active challenge", "Please trigger login first.");
+          return;
+        }
+
+        otpBtn.disabled = true;
+        showResult("analyzing", '<span class="spinner"></span>Verifying OTP...', null);
+
+        try {
+          const response = await fetch(VERIFY_OTP_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              challenge_id: currentChallengeId,
+              otp: otpCode
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.status === 200 && data.status === "SUCCESS") {
+            showResult("verified", "✅ OTP Verified — Login Allowed",
+              "Step-up authentication completed successfully.");
+            hideOTP();
+
+          } else if (response.status === 401) {
+            const remaining = data.attempts_remaining !== undefined
+              ? ` (${data.attempts_remaining} attempts remaining)` : "";
+            showResult("error", "❌ Invalid OTP Code" + remaining,
+              data.error || "The code you entered is incorrect.");
+
+          } else if (response.status === 403) {
+            showResult("blocked", "🔒 Challenge Locked",
+              data.error || "Maximum attempts exceeded or challenge expired.");
+            hideOTP();
+
+          } else if (response.status === 400) {
+            showResult("error", "⚠ Invalid Request",
+              data.error || "The challenge ID or OTP is invalid.");
+
+          } else {
+            showResult("error", "⚠ Unexpected Response",
+              `Status: ${response.status}`);
+          }
+
+        } catch (err) {
+          showResult("error", "❌ Connection Failed",
+            "Could not reach backend. Is Django running?");
+        } finally {
+          otpBtn.disabled = false;
+        }
+      });
+
+      // Allow Enter key in OTP input
+      otpInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          otpBtn.click();
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>

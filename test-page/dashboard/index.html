@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SentinelGuard — Security Dashboard</title>
+  <meta name="description" content="SentinelGuard Security Dashboard — Real-time adaptive security monitoring">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon">S</div>
+        <div>
+          <div class="brand-name">SentinelGuard</div>
+          <div class="brand-sub">Security Dashboard</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Connecting...</span>
+        <button class="refresh-btn" id="refreshBtn" title="Refresh data">↻ Refresh</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Stats Cards -->
+    <section class="stats-grid" id="statsGrid">
+      <div class="stat-card" id="statEvents">
+        <div class="stat-value" id="totalEvents">—</div>
+        <div class="stat-label">Total Events</div>
+        <div class="stat-icon">📡</div>
+      </div>
+      <div class="stat-card" id="statDecisions">
+        <div class="stat-value" id="totalDecisions">—</div>
+        <div class="stat-label">Security Decisions</div>
+        <div class="stat-icon">⚡</div>
+      </div>
+      <div class="stat-card stat-allowed" id="statAllowed">
+        <div class="stat-value" id="totalAllowed">—</div>
+        <div class="stat-label">Allowed</div>
+        <div class="stat-icon">✅</div>
+      </div>
+      <div class="stat-card stat-otp" id="statOtp">
+        <div class="stat-value" id="totalOtp">—</div>
+        <div class="stat-label">OTP Challenges</div>
+        <div class="stat-icon">🔐</div>
+      </div>
+      <div class="stat-card stat-blocked" id="statBlocked">
+        <div class="stat-value" id="totalBlocked">—</div>
+        <div class="stat-label">Blocked</div>
+        <div class="stat-icon">🚫</div>
+      </div>
+    </section>
+
+    <!-- Risk Distribution -->
+    <section class="panel" id="riskPanel">
+      <h2 class="panel-title">Decision Distribution</h2>
+      <div class="risk-bar-container" id="riskBarContainer">
+        <div class="risk-bar">
+          <div class="risk-segment risk-allowed" id="barAllowed" style="width: 0%"></div>
+          <div class="risk-segment risk-otp" id="barOtp" style="width: 0%"></div>
+          <div class="risk-segment risk-blocked" id="barBlocked" style="width: 0%"></div>
+        </div>
+        <div class="risk-legend">
+          <span class="legend-item"><span class="legend-dot allowed"></span> ALLOW</span>
+          <span class="legend-item"><span class="legend-dot otp"></span> OTP</span>
+          <span class="legend-item"><span class="legend-dot blocked"></span> BLOCK</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Security Logs -->
+    <section class="panel" id="logsPanel">
+      <h2 class="panel-title">Recent Security Logs</h2>
+      <div class="table-wrap">
+        <table class="logs-table" id="logsTable">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Risk Score</th>
+              <th>Session</th>
+              <th>Username</th>
+              <th>Reason</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="logsBody">
+            <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>SentinelGuard — Local Demo Dashboard</span>
+    <span><a href="/login.html">Demo Login</a> · <a href="/">Test Page</a></span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

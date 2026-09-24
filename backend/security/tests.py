@@ -326,3 +326,125 @@ class SecurityAPITests(APITestCase):
         ).first()
         self.assertIsNotNone(otp_success_log)
         self.assertAlmostEqual(otp_success_log.risk_score, 0.55)
+
+
+class DashboardAPITests(APITestCase):
+    """
+    Tests for GET /api/security/stats/ and GET /api/security/logs/.
+    Verifies read-only access, correct statistics, and secret exclusion.
+    """
+
+    def setUp(self):
+        self.stats_url = reverse("security-stats")
+        self.logs_url = reverse("security-logs")
+
+        # Create test sessions and SecurityLog entries
+        self.session_a = Session.objects.create(session_id="sess_dash_allow")
+        self.session_b = Session.objects.create(session_id="sess_dash_otp")
+        self.session_c = Session.objects.create(session_id="sess_dash_block")
+
+        SecurityLog.objects.create(
+            session=self.session_a,
+            session_id_raw="sess_dash_allow",
+            username_attempted="alice",
+            ip_address="192.168.1.1",
+            risk_score=0.10,
+            action_taken="ALLOW",
+            reason="Low risk"
+        )
+        SecurityLog.objects.create(
+            session=self.session_b,
+            session_id_raw="sess_dash_otp",
+            username_attempted="bob",
+            ip_address="10.0.0.1",
+            risk_score=0.45,
+            action_taken="OTP",
+            reason="Medium risk"
+        )
+        SecurityLog.objects.create(
+            session=self.session_c,
+            session_id_raw="sess_dash_block",
+            username_attempted="charlie",
+            ip_address="172.16.0.1",
+            risk_score=0.92,
+            action_taken="BLOCK",
+            reason="High risk"
+        )
+
+    def test_23_stats_returns_200(self):
+        """GET /api/security/stats/ returns HTTP 200."""
+        response = self.client.get(self.stats_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("stats", response.json())
+
+    def test_24_logs_returns_200(self):
+        """GET /api/security/logs/ returns HTTP 200."""
+        response = self.client.get(self.logs_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("logs", response.json())
+
+    def test_25_stats_is_get_only(self):
+        """POST to /api/security/stats/ returns 405 Method Not Allowed."""
+        response = self.client.post(self.stats_url, data={}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_26_logs_is_get_only(self):
+        """POST to /api/security/logs/ returns 405 Method Not Allowed."""
+        response = self.client.post(self.logs_url, data={}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_27_logs_exclude_ip_address(self):
+        """SecurityLog API response must never contain ip_address."""
+        response = self.client.get(self.logs_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for log_entry in response.json()["logs"]:
+            self.assertNotIn("ip_address", log_entry)
+
+    def test_28_logs_exclude_otp_hash(self):
+        """SecurityLog API response must never contain otp_hash."""
+        response = self.client.get(self.logs_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for log_entry in response.json()["logs"]:
+            self.assertNotIn("otp_hash", log_entry)
+
+    def test_29_logs_exclude_password(self):
+        """SecurityLog API response must never contain password fields."""
+        response = self.client.get(self.logs_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for log_entry in response.json()["logs"]:
+            self.assertNotIn("password", log_entry)
+            self.assertNotIn("otp_code", log_entry)
+
+    def test_30_logs_exclude_raw_coordinates(self):
+        """SecurityLog API response must never contain raw coordinate fields."""
+        response = self.client.get(self.logs_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for log_entry in response.json()["logs"]:
+            self.assertNotIn("x", log_entry)
+            self.assertNotIn("y", log_entry)
+            self.assertNotIn("coordinates", log_entry)
+
+    def test_31_stats_reflect_action_counts(self):
+        """Dashboard stats accurately reflect ALLOW, OTP, and BLOCK counts."""
+        response = self.client.get(self.stats_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        stats = response.json()["stats"]
+        self.assertEqual(stats["allowed"], 1)
+        self.assertEqual(stats["otp"], 1)
+        self.assertEqual(stats["blocked"], 1)
+        self.assertEqual(stats["total_decisions"], 3)
+
+    def test_32_stats_total_events_counts_event_table(self):
+        """Dashboard total_events counts from the Event table, not SecurityLog."""
+        from detection.models import Event
+        Event.objects.create(
+            event_id="evt_dash_test_001",
+            session=self.session_a,
+            event_type="MOUSE_BEHAVIOR",
+            client_timestamp=1727100000000,
+            payload={"movement_count": 25}
+        )
+        response = self.client.get(self.stats_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        stats = response.json()["stats"]
+        self.assertEqual(stats["total_events"], 1)
