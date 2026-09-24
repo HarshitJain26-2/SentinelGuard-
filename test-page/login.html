@@ -396,22 +396,56 @@
       // Session ID Bridge
       // ========================================
 
+      const targetOrigin = (window.location.origin && window.location.origin !== "null")
+        ? window.location.origin
+        : "*";
+
+      function requestSessionId() {
+        if (!extensionDetected) {
+          window.postMessage({ type: "SentinelGuard:RequestSessionId" }, targetOrigin);
+        }
+      }
+
       // Listen for session ID response from extension content script
       window.addEventListener("message", (event) => {
         if (event.source !== window) return;
-        if (event.data && event.data.type === "SentinelGuard:SessionId" && event.data.sessionId) {
-          sessionId = event.data.sessionId;
+        if (!event.data || typeof event.data !== "object") return;
+        if (
+          event.data.type === "SentinelGuard:SessionId" &&
+          typeof event.data.sessionId === "string" &&
+          event.data.sessionId.trim().length > 0
+        ) {
+          sessionId = event.data.sessionId.trim();
           extensionDetected = true;
           sessionIdDisplay.textContent = sessionId;
           sessionWarning.style.display = "none";
+          if (requestRetryInterval) {
+            clearInterval(requestRetryInterval);
+            requestRetryInterval = null;
+          }
         }
       });
 
-      // Request session ID from extension
-      window.postMessage({ type: "SentinelGuard:RequestSessionId" }, "*");
+      // Request session ID immediately
+      requestSessionId();
+
+      // Poll periodically (every 100ms) until extension responds or timeout is reached,
+      // handling the case where content.js (run_at: document_idle) injects after page script
+      let requestRetryInterval = setInterval(() => {
+        if (extensionDetected) {
+          clearInterval(requestRetryInterval);
+          requestRetryInterval = null;
+        } else {
+          requestSessionId();
+        }
+      }, 100);
 
       // Fallback: if extension doesn't respond in 1.5 seconds, generate standalone ID
       setTimeout(() => {
+        if (requestRetryInterval) {
+          clearInterval(requestRetryInterval);
+          requestRetryInterval = null;
+        }
         if (!extensionDetected) {
           sessionId = "sess_" + crypto.randomUUID();
           sessionIdDisplay.textContent = sessionId;
